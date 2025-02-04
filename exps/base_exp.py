@@ -157,7 +157,15 @@ head_conf = {
     'min_radius': 2,
 }
 
-
+# BEVDepth is a unified camera-based 3D object detection model that converts multi-camera inputs
+# into bird's eye view representations for autonomous driving perception.
+# The model combines depth estimation with 3D object detection to predict 3D bounding boxes in BEV space.
+#   """
+#     PyTorch Lightning module for BEVDepth model:
+#     - Handles training/validation loops
+#     - Manages data loading
+#     - Orchestrates model components
+#     """
 class BEVDepthLightningModel(LightningModule):
     MODEL_NAMES = sorted(name for name in models.__dict__
                          if name.islower() and not name.startswith('__')

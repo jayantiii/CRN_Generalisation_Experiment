@@ -8,6 +8,9 @@ from mmcv.runner import auto_fp16
 
 from ..modules.multimodal_deformable_cross_attention import DeformableCrossAttention
 
+# Fuses features from multiple modalities (camera, radar, lidar)
+# Uses deformable attention for dynamic spatial sampling to align features
+# Part of 3D object detection pipeline
 
 class MFAFuser(nn.Module):
     def __init__(self, num_sweeps=4, img_dims=80, pts_dims=128, embed_dims=256,

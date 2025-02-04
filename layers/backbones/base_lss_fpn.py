@@ -10,6 +10,17 @@ from mmdet.models.backbones.resnet import BasicBlock
 
 from ops.voxel_pooling_v2 import voxel_pooling
 
+# Implements Lift-Splat-Shoot Feature Pyramid Network
+# Used for 3D object detection from multi-view images
+
+# Part of BEVDet architecture
+# Processes multi-scale features
+# Creates bird's eye view representations
+
+# Dilated convolutions for larger receptive field
+# Feature pyramid for multi-scale detection
+# Voxel pooling for 3D representation
+
 __all__ = ['BaseLSSFPN']
 
 

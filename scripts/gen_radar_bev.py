@@ -7,9 +7,17 @@ from tqdm import tqdm
 from pyquaternion import Quaternion
 
 from nuscenes.nuscenes import NuScenes
-from nuscenes.utils.data_classes import RadarPointCloud
+from nuscenes.utils.data_classes import RadarPointCloud 
 from nuscenes.utils.geometry_utils import transform_matrix, view_points
 
+# Generates Bird's Eye View (BEV) representations from radar data
+# Combines multiple radar sweeps
+# Filters points based on distance
+# Saves processed data for training/inference
+
+# Uses 5 radar channels (front, front-left, front-right, back-left, back-right)
+# Processes multiple radar sweeps (N_SWEEPS = 8)
+# Filters points based on distance (0.1m to 100m)
 
 SPLIT = 'v1.0-trainval'
 DATA_PATH = 'data/nuScenes'
@@ -37,6 +45,8 @@ if DEBUG:
 # https://github.com/nutonomy/nuscenes-devkit/blob/master/python-sdk/nuscenes/utils/data_classes.py#L315
 # FIELDS: x y z dyn_prop id rcs vx vy vx_comp vy_comp is_quality_valid ambig_state 
 #         x_rms y_rms invalid_state pdh0 vx_rms vy_rms
+
+#The indices correspond to specific fields in the NuScenes radar point cloud data format:
 SAVE_FIELDS = [0, 1, 2, 5, 8, 9, -1]  # x, y, z, rcs, vx_comp, vy_comp, (dummy field for sweep info)
 
 nusc = NuScenes(
@@ -53,6 +63,9 @@ else:
     dynprop_states = list(range(8))
     ambig_states = [3]
 
+
+#Sweep: Single 360° rotation/scan of a radar sensor
+#Frame: Complete set of data from all radar sensors at one timestamp
 
 def worker(info):
     # Init.
@@ -74,15 +87,17 @@ def worker(info):
     if DEBUG:
         lidar = LidarPointCloud.from_file(os.path.join(nusc.dataroot, lidar_data['filename']))
 
-    for chan in RADAR_CHAN:
+    for chan in RADAR_CHAN:  # 5 radars
         # Aggregate current and previous sweeps.
         sample_data_token = sample['data'][chan]
         current_sd_rec = nusc.get('sample_data', sample_data_token)
+        #5 radars × 8 sweeps = 40 total sweeps
         for sweep in range(N_SWEEPS):
             # Load up the pointcloud and remove points close to the sensor.
             file_name = os.path.join(nusc.dataroot, current_sd_rec['filename'])
             current_pc = RadarPointCloud.from_file(file_name, invalid_states, dynprop_states, ambig_states)
 
+            # Transform chain: sensor -> car -> global -> reference
             # Get past pose.
             current_pose_rec = nusc.get('ego_pose', current_sd_rec['ego_pose_token'])
             global_from_car = transform_matrix(current_pose_rec['translation'],
@@ -125,6 +140,7 @@ def worker(info):
 
     points = all_pc.points[SAVE_FIELDS, :].T.astype(np.float32)
 
+    # Filter points based on distance
     dist = np.linalg.norm(points[:, 0:2], axis=1)
     mask = np.ones(dist.shape[0], dtype=bool)
     mask = np.logical_and(mask, dist > MIN_DISTANCE)
@@ -134,6 +150,10 @@ def worker(info):
     file_name = os.path.split(info['lidar_infos']['LIDAR_TOP']['filename'])[-1]
     points.tofile(os.path.join(DATA_PATH, OUT_PATH, file_name))
 
+
+#Plots radar points
+# Shows velocity vectors
+# Compares with lidar data
     if DEBUG:
         fig, ax = plt.subplots(figsize=(12, 12))
         points = all_pc.points[:3, :]
@@ -156,11 +176,19 @@ def worker(info):
         plt.gca().set_aspect('equal', adjustable='box')
         plt.show()
 
+        The final BEV representation is:
+
+# Points in x-y plane (top-down view)
+# Each point has [x,y,z,rcs,vx,vy,sweep_id]
+# Filtered by distance from sensor
+# All points transformed to common reference frame
+# This creates a 2D bird's eye view representation suitable for detection and tracking tasks.
+
 
 if __name__ == '__main__':
     mmcv.mkdir_or_exist(os.path.join(DATA_PATH, OUT_PATH))
-    for info_path in info_paths:
-        infos = mmcv.load(info_path)
+    for info_path in info_paths: # train and val
+        infos = mmcv.load(info_path) #load pkl files
         for info in tqdm(infos):
             worker(info)
 

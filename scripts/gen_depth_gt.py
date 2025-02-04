@@ -8,6 +8,23 @@ from nuscenes.utils.geometry_utils import view_points
 from pyquaternion import Quaternion
 
 
+# """
+#     Maps 3D LiDAR points to 2D image space for depth ground truth generation
+    
+#     Flow:
+#     1. Convert points to LidarPointCloud format
+#     2. Global -> Ego vehicle transform
+#     3. Ego -> Camera transform 
+#     4. Project points to image plane
+#     5. Extract depth values
+#     """
+
+# Key Functions:
+
+# Point Cloud Loading
+# Coordinate Transforms
+# Depth Value Extraction
+# Image Plane Projection
 # https://github.com/nutonomy/nuscenes-devkit/blob/master/python-sdk/nuscenes/nuscenes.py#L834
 def map_pointcloud_to_image(
     pc,

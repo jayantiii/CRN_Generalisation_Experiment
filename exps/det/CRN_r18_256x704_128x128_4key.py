@@ -98,6 +98,7 @@ class CRNLightningModel(BEVDepthLightningModel):
             lr=2e-4,
             weight_decay=1e-4)
         ################################################
+        #IDA (Image Data Augmentation) Configuration
         self.ida_aug_conf = {
             'resize_lim': (0.386, 0.55),
             'final_dim': (256, 704),
@@ -112,6 +113,7 @@ class CRNLightningModel(BEVDepthLightningModel):
             ],
             'Ncams': 6,
         }
+        #BEV (Bird's Eye View) Data Augmentation Configuration
         self.bda_aug_conf = {
             'rot_ratio': 1.0,
             'rot_lim': (-22.5, 22.5),
@@ -121,12 +123,17 @@ class CRNLightningModel(BEVDepthLightningModel):
         }
         ################################################
         self.backbone_img_conf = {
+              # BEV range parameters # min, max, resolution
             'x_bound': [-51.2, 51.2, 0.8],
             'y_bound': [-51.2, 51.2, 0.8],
-            'z_bound': [-5, 3, 8],
+            'z_bound': [-5, 3, 8],     
             'd_bound': [2.0, 58.0, 0.8],
+
+            #Image Settings
             'final_dim': (256, 704),
             'downsample_factor': 16,
+
+            #Network
             'img_backbone_conf': dict(
                 type='ResNet',
                 depth=18,
@@ -135,12 +142,14 @@ class CRNLightningModel(BEVDepthLightningModel):
                 norm_eval=False,
                 init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet18'),
             ),
+            #Feature Pyramid Network - feature extracter
             'img_neck_conf': dict(
                 type='SECONDFPN',
                 in_channels=[64, 128, 256, 512],
                 upsample_strides=[0.25, 0.5, 1, 2],
                 out_channels=[64, 64, 64, 64],
             ),
+            #Depth Network
             'depth_net_conf':
                 dict(in_channels=256, mid_channels=256),
             'radar_view_transform': True,
@@ -148,13 +157,17 @@ class CRNLightningModel(BEVDepthLightningModel):
             'output_channels': 80,
         }
         ################################################
+        #Processes radar point clouds into bird's eye view features for 3D object detection.
         self.backbone_pts_conf = {
+              # 1. Voxelizes radar points
             'pts_voxel_layer': dict(
                 max_num_points=8,
                 voxel_size=[8, 0.4, 2],
                 point_cloud_range=[0, 2.0, 0, 704, 58.0, 2],
                 max_voxels=(768, 1024)
             ),
+
+             # 2. Encodes radar pillars
             'pts_voxel_encoder': dict(
                 type='PillarFeatureNet',
                 in_channels=5,
@@ -167,11 +180,13 @@ class CRNLightningModel(BEVDepthLightningModel):
                 norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
                 legacy=True
             ),
+            # 3. Projects to BEV
             'pts_middle_encoder': dict(
                 type='PointPillarsScatter',
                 in_channels=64,
                 output_shape=(140, 88)
             ),
+              # 4. Processes BEV features
             'pts_backbone': dict(
                 type='SECOND',
                 in_channels=64,
@@ -181,6 +196,7 @@ class CRNLightningModel(BEVDepthLightningModel):
                 norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
                 conv_cfg=dict(type='Conv2d', bias=True, padding_mode='reflect')
             ),
+            # 5. Multi-scale fusion
             'pts_neck': dict(
                 type='SECONDFPN',
                 in_channels=[64, 128, 256],

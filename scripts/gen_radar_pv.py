@@ -8,6 +8,14 @@ from pyquaternion import Quaternion
 from nuscenes.utils.data_classes import LidarPointCloud
 from nuscenes.utils.geometry_utils import view_points
 
+# Converts radar BEV points to perspective view
+# Projects points onto camera images
+# Creates multi-view radar representations
+
+# For each camera:
+# Project radar points to image plane
+# Filter points by distance/visibility
+# Save perspective view data
 
 DATA_PATH = 'data/nuScenes'
 RADAR_SPLIT = 'radar_bev_filter'
@@ -103,9 +111,12 @@ def worker(info):
     pc.rotate(Quaternion(lidar_ego_pose['rotation']).rotation_matrix)
     pc.translate(np.array(lidar_ego_pose['translation']))
 
-    for i, cam_key in enumerate(cam_keys):
+    for i, cam_key in enumerate(cam_keys): # 6 cameras
+         # Get camera calibration and pose
         cam_calibrated_sensor = info['cam_infos'][cam_key]['calibrated_sensor']
         cam_ego_pose = info['cam_infos'][cam_key]['ego_pose']
+
+        # Project 3D radar points to 2D image coordinates
         pts_img, features_img = map_pointcloud_to_image(
             pc.points.copy(), features.copy(), IMG_SHAPE, cam_calibrated_sensor, cam_ego_pose)
 

@@ -5,6 +5,13 @@ import torch
 
 from dataset.nusc_mv_det_dataset import NuscMVDetDataset
 
+#Purpose: Unit tests for NuScenes multi-view 3D object detection dataset implementation
+# Test Components
+# Camera configuration
+# Image augmentation
+# 3D detection
+# Multi-view synchronization
+
 CLASSES = [
     'car',
     'truck',

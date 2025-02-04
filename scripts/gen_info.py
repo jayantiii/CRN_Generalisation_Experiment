@@ -5,6 +5,12 @@ from tqdm import tqdm
 from nuscenes.nuscenes import NuScenes
 from nuscenes.utils import splits
 
+#    A[NuScenes Dataset] --> B[Scene Selection]
+    # B --> C[Sample Processing]
+    # C --> D[Camera Data]
+    # C --> E[LiDAR Data]
+    # D --> F[Generate Info Dict]
+    # E --> F
 
 def generate_info(nusc, scenes, max_cam_sweeps=6, max_lidar_sweeps=10):
     infos = list()
@@ -145,7 +151,13 @@ def generate_info(nusc, scenes, max_cam_sweeps=6, max_lidar_sweeps=10):
                 cur_sample = nusc.get('sample', cur_sample['next'])
     return infos
 
-
+#     A[Load NuScenes] --> B[Split Scenes]
+#     B --> C[Generate Train-Tiny]
+#     B --> D[Generate Train]
+#     B --> E[Generate Val]
+#     C --> F[Save PKL Files]
+#     D --> F
+#     E --> F
 def main():
     trainval_nusc = NuScenes(version='v1.0-trainval',
                              dataroot='./data/nuScenes/',

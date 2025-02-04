@@ -1,3 +1,23 @@
+# graph LR
+#     A[Camera Images] --> B[RVTLSSFPN]
+#     C[Radar Points] --> D[PtsBackbone]
+#     B --> E[MFAFuser]
+#     D --> E
+#     E --> F[BEVDepthHead]
+#     F --> G[3D Detection]
+
+# Main model for autonomous driving perception
+# Combines cameras (6 surround views) and radar
+# Outputs 3D object detections in BEV space
+# Implements paper: https://arxiv.org/abs/2304.00670
+
+# Build Plan:
+# Input Processing
+# Feature Extraction
+# Feature Fusion
+# Detection Output
+
+
 import mmcv
 
 from models.base_bev_depth import BaseBEVDepth

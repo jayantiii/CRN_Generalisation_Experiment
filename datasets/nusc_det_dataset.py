@@ -1,3 +1,24 @@
+#called in base_exp.py
+# Coordinate Transformations: The code handles various coordinate system transformations between:
+
+# Sensor space (camera/lidar local coordinates)
+# Ego vehicle space (vehicle's local coordinates)
+# Global world space
+# Camera Calibration: It processes camera calibration information including:
+
+# Camera intrinsic parameters
+# Camera-to-ego transformations via rotation quaternions and translation vectors
+# Multi-camera system synchronization
+# Ground Truth Handling: The get_gt() method extracts ground truth labels and bounding boxes for training, including:
+
+# Converting annotation coordinates
+# Processing multiple camera views
+# Aggregating vehicle pose information
+# Temporal Data: The code appears to handle both:
+
+# Key frames (main timestamps)
+# Sweep frames (additional timestamps for temporal context)
+
 import os
 
 import torch

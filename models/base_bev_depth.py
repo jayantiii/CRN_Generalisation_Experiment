@@ -1,3 +1,19 @@
+# Base class for BEVDepth model architecture
+# Implements Bird's Eye View (BEV) perception from multi-camera inputs
+# Combines depth estimation with 3D object detection
+
+# Architecture Components:
+# Backbone (BaseLSSFPN)
+# Processes raw camera images
+# Uses Lift-Splat-Shoot architecture with FPN
+# Extracts multi-scale features
+
+# Head (BEVDepthHead)
+# Converts image features to BEV space
+# Performs 3D object detection
+# Outputs detection results
+
+
 import mmcv
 import torch
 from torch import nn

@@ -1,5 +1,18 @@
 '''Modified from # https://github.com/nutonomy/nuscenes-devkit/blob/57889ff20678577025326cfc24e57424a829be0a/python-sdk/nuscenes/eval/detection/evaluate.py#L222 # noqa
 '''
+
+# Main Function: Evaluates 3D object detection results on nuScenes dataset
+
+# Key Components:
+
+# Uses official nuScenes evaluation toolkit
+# Processes detection results
+# Calculates metrics:
+# mAP (mean Average Precision)
+# NDS (nuScenes Detection Score)
+# True Positive metrics
+# Handles different dataset splits (mini/full)
+
 import json
 import os.path as osp
 import tempfile
