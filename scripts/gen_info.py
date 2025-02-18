@@ -165,6 +165,7 @@ def main():
     train_scenes = splits.train
     val_scenes = splits.val
     train_infos_tiny = generate_info(trainval_nusc, train_scenes[:2])
+    print()
     mmcv.dump(train_infos_tiny, './data/nuScenes/nuscenes_infos_train-tiny.pkl')
     train_infos = generate_info(trainval_nusc, train_scenes)
     mmcv.dump(train_infos, './data/nuScenes/nuscenes_infos_train.pkl')

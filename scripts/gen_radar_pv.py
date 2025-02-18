@@ -1,3 +1,10 @@
+# The script processes radar or LiDAR point clouds and projects them onto camera images, creating a perspective view representation. The output .jpg.bin files contain:
+
+# Projected 2D image coordinates of radar/LiDAR points.
+# Associated features (e.g., depth, intensity, velocity, etc.).
+# Binary format for efficient storage and loading.
+# These .bin files correspond to specific camera images (e.g., CAM_BACK), storing the radar/LiDAR points mapped to that image frame.
+
 import os
 
 import mmcv

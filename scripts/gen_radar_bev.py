@@ -176,8 +176,6 @@ def worker(info):
         plt.gca().set_aspect('equal', adjustable='box')
         plt.show()
 
-        The final BEV representation is:
-
 # Points in x-y plane (top-down view)
 # Each point has [x,y,z,rcs,vx,vy,sweep_id]
 # Filtered by distance from sensor

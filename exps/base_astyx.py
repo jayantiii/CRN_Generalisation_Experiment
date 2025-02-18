@@ -45,9 +45,8 @@ ida_aug_conf = {
     'W': 1600,
     'rand_flip': True,
     'bot_pct_lim': (0.0, 0.0),
-    'cams': ['CAM_FRONT_LEFT', 'CAM_FRONT', 'CAM_FRONT_RIGHT',
-             'CAM_BACK_LEFT', 'CAM_BACK', 'CAM_BACK_RIGHT'],
-    'Ncams': 6,
+    'cams': ['CAM_FRONT'],
+    'Ncams': 1,
 }
 bda_aug_conf = {
     'rot_ratio': 1.0,
@@ -157,15 +156,7 @@ head_conf = {
     'min_radius': 2,
 }
 
-# BEVDepth is a unified camera-based 3D object detection model that converts multi-camera inputs
-# into bird's eye view representations for autonomous driving perception.
-# The model combines depth estimation with 3D object detection to predict 3D bounding boxes in BEV space.
-#   """
-#     PyTorch Lightning module for BEVDepth model:
-#     - Handles training/validation loops
-#     - Manages data loading
-#     - Orchestrates model components
-#     """
+
 class BEVDepthLightningModel(LightningModule):
     MODEL_NAMES = sorted(name for name in models.__dict__
                          if name.islower() and not name.startswith('__')
@@ -173,7 +164,7 @@ class BEVDepthLightningModel(LightningModule):
 
     def __init__(self,
                  gpus: int = 1,
-                 data_root='data/nuScenes',
+                 data_root='data/radar_dataset_astyx-main/astyx/dataset_astyx_hires2019',
                  eval_interval=1,
                  batch_size_per_device=8,
                  class_names=CLASSES,
@@ -182,7 +173,7 @@ class BEVDepthLightningModel(LightningModule):
                  ida_aug_conf=ida_aug_conf,
                  bda_aug_conf=bda_aug_conf,
                  rda_aug_conf=rda_aug_conf,
-                 default_root_dir='./outputs/',
+                 default_root_dir='./outputs/astyx',
                  **kwargs):
         super().__init__()
         self.save_hyperparameters()
@@ -313,9 +304,8 @@ class BEVDepthLightningModel(LightningModule):
                                   -1, self.depth_channels + 1)[:, 1:]
         return gt_depths.float()
 
-    # eval/predict step
     def eval_step(self, batch, batch_idx, prefix: str):
-        (sweep_imgs, mats, img_metas, _, _, _, _, pts_pv) = batch   ### unpacking batch
+        (sweep_imgs, mats, img_metas, _, _, _, _, pts_pv) = batch
         if torch.cuda.is_available():
             if self.return_image:
                 sweep_imgs = sweep_imgs.cuda()
@@ -335,7 +325,7 @@ class BEVDepthLightningModel(LightningModule):
             results[i][1] = results[i][1].detach().cpu().numpy()
             results[i][2] = results[i][2].detach().cpu().numpy()
             results[i].append(img_metas[i])
-        return results ### return results
+        return results
 
     def validation_epoch_end(self, validation_step_outputs):
         detection_losses = list()
@@ -476,17 +466,17 @@ class BEVDepthLightningModel(LightningModule):
     def test_dataloader(self):
         return self.val_dataloader()
 
-   ### predict data loader
+
+    #data loader
     def predict_dataloader(self):
-        #  (sweep_imgs, mats, img_metas, _, _, _, _, pts_pv) = batch  ---- THESE ARE USED
         predict_dataset = NuscDatasetRadarDet(
             ida_aug_conf=self.ida_aug_conf,
             bda_aug_conf=self.bda_aug_conf,
             rda_aug_conf=self.rda_aug_conf,
             img_backbone_conf=self.backbone_img_conf,
-            classes=self.class_names, #class names
-            data_root=self.data_root, #data root
-            info_paths=self.val_info_paths, #val info paths
+            classes=self.class_names,
+            data_root=self.data_root,
+            info_paths=self.val_info_paths, # pkl file
             is_train=False,
             img_conf=self.img_conf,
             load_interval=self.load_interval,

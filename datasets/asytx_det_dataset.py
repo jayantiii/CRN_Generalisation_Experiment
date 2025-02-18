@@ -1,24 +1,3 @@
-#called in base_exp.py
-# Coordinate Transformations: The code handles various coordinate system transformations between:
-
-# Sensor space (camera/lidar local coordinates)
-# Ego vehicle space (vehicle's local coordinates)
-# Global world space
-# Camera Calibration: It processes camera calibration information including:
-
-# Camera intrinsic parameters
-# Camera-to-ego transformations via rotation quaternions and translation vectors
-# Multi-camera system synchronization
-# Ground Truth Handling: The get_gt() method extracts ground truth labels and bounding boxes for training, including:
-
-# Converting annotation coordinates
-# Processing multiple camera views
-# Aggregating vehicle pose information
-# Temporal Data: The code appears to handle both:
-
-# Key frames (main timestamps)
-# Sweep frames (additional timestamps for temporal context)
-
 import os
 
 import torch
@@ -31,32 +10,19 @@ from mmdet3d.core.bbox.structures.lidar_box3d import LiDARInstance3DBoxes
 from nuscenes.utils.data_classes import Box
 from torch.utils.data import Dataset
 
-__all__ = ['NuscDatasetRadarDet']
+__all__ = ['AstyxDatasetRadarDet']
 
 map_name_from_general_to_detection = {
-    'human.pedestrian.adult': 'pedestrian',
-    'human.pedestrian.child': 'pedestrian',
-    'human.pedestrian.wheelchair': 'ignore',
-    'human.pedestrian.stroller': 'ignore',
-    'human.pedestrian.personal_mobility': 'ignore',
-    'human.pedestrian.police_officer': 'pedestrian',
-    'human.pedestrian.construction_worker': 'pedestrian',
-    'animal': 'ignore',
-    'vehicle.car': 'car',
-    'vehicle.motorcycle': 'motorcycle',
-    'vehicle.bicycle': 'bicycle',
-    'vehicle.bus.bendy': 'bus',
-    'vehicle.bus.rigid': 'bus',
-    'vehicle.truck': 'truck',
-    'vehicle.construction': 'construction_vehicle',
-    'vehicle.emergency.ambulance': 'ignore',
-    'vehicle.emergency.police': 'ignore',
-    'vehicle.trailer': 'trailer',
-    'movable_object.barrier': 'barrier',
-    'movable_object.trafficcone': 'traffic_cone',
-    'movable_object.pushable_pullable': 'ignore',
-    'movable_object.debris': 'ignore',
-    'static_object.bicycle_rack': 'ignore',
+    'pedestrian': 'pedestrian',
+    'car': 'car',
+    'truck': 'truck',
+    'bicycle': 'bicycle',
+    'motorcycle': 'motorcycle',
+    'bus': 'bus',
+    'trailer': 'trailer',
+    'barrier': 'barrier',
+    'traffic_cone': 'traffic_cone',
+    'ignore': 'ignore',
 }
 
 
@@ -125,17 +91,18 @@ def bev_det_transform(gt_boxes, rotate_angle, scale_ratio, flip_dx, flip_dy):
     return gt_boxes, rot_mat
 
 
-class NuscDatasetRadarDet(Dataset):
+#Changing this for astyx dataset 
+class AstyxDatasetRadarDet(Dataset):
     def __init__(self,
-                 ida_aug_conf, #image augmentation
-                 bda_aug_conf, #bev augmentation
-                 rda_aug_conf, #radar augmentation
+                 ida_aug_conf,
+                 bda_aug_conf,
+                 rda_aug_conf,
                  classes,
-                 data_root, #data root = 'data/nuScenes',
-                 info_paths, #info_paths = ['data/nuScenes/nuscenes_infos_train.pkl']
+                 data_root,
+                 info_paths,
                  is_train,
                  load_interval=1,
-                 num_sweeps=1,
+                 num_sweeps=1, # single frame
                  img_conf=dict(img_mean=[123.675, 116.28, 103.53],
                                img_std=[58.395, 57.12, 57.375],
                                to_rgb=True),
@@ -216,12 +183,9 @@ class NuscDatasetRadarDet(Dataset):
             self.infos = self.infos[::load_interval]
         self.depth_path = depth_path
         self.radar_pv_path = radar_pv_path
-  
-        # Radar point-voxel settings
+
         self.max_radar_points_pv = 1536
         self.max_distance_pv = self.img_backbone_conf['d_bound'][1]
-
-    ###init till here
 
     def _get_sample_indices(self):
         """Load annotations from ann_file.
@@ -314,7 +278,6 @@ class NuscDatasetRadarDet(Dataset):
             radar_idx = np.arange(self.rda_aug_conf['N_sweeps'])
         return radar_idx
 
-    # is it transform to image coordinates or bev
     def transform_radar_pv(self, points, resize, resize_dims, crop, flip, rotate, radar_idx):
         points = points[points[:, 2] < self.max_distance_pv, :]
 
@@ -864,7 +827,7 @@ def collate_fn(data,
         if is_return_depth:
             gt_depth = iter_data[10]
             depth_labels_batch.append(gt_depth)
-        if is_return_radar_pv: ## radar point-voxel!!
+        if is_return_radar_pv:
             radar_pv = iter_data[11]
             radar_pv_batch.append(radar_pv)
 

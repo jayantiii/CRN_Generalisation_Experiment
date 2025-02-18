@@ -76,6 +76,24 @@ FPS: 29.38
 30 | model.head.neck                         | SECONDFPN                 | 2.4 M
 ---------------------------------------------------------------------------------------
 """
+
+# Image Types:
+# sweep_imgs: Multi-view camera images
+# BEV generated internally from these inputs
+# Projection Matrices:
+# Transform between coordinate frames
+# Used to create BEV from images and radar
+#BEV is generated internally using camera images and projection matrices.
+
+  # Projection matrices structure - is this right?
+    # self.mats = {
+    #     'sensor2ego_mats': [],      # Sensor to vehicle transform
+    #     'intrin_mats': [],          # Camera intrinsics
+    #     'ida_mats': [],             # Image augmentation matrices
+    #     'bda_mat': None,            # BEV augmentation matrix
+    #     'sensor2sensor_mats': []     # Cross-sensor calibration
+    # }
+
 import torch
 from utils.torch_dist import synchronize
 
@@ -108,10 +126,9 @@ class CRNLightningModel(BEVDepthLightningModel):
             'rand_flip': True,
             'bot_pct_lim': (0.0, 0.0),
             'cams': [
-                'CAM_FRONT_LEFT', 'CAM_FRONT', 'CAM_FRONT_RIGHT',
-                'CAM_BACK_LEFT', 'CAM_BACK', 'CAM_BACK_RIGHT'
+                'CAM_FRONT'  #changed it to CAM_FRONT only
             ],
-            'Ncams': 6,
+            'Ncams': 1,
         }
         #BEV (Bird's Eye View) Data Augmentation Configuration
         self.bda_aug_conf = {
@@ -301,6 +318,7 @@ class CRNLightningModel(BEVDepthLightningModel):
             for pg in self.trainer.optimizers[0].param_groups:
                 self.log('learning_rate', pg["lr"])
 
+        ## This is where data is loaded!!
         (sweep_imgs, mats, _, gt_boxes_3d, gt_labels_3d, _, depth_labels, pts_pv) = batch
         if torch.cuda.is_available():
             if self.return_image:
@@ -308,7 +326,8 @@ class CRNLightningModel(BEVDepthLightningModel):
                 for key, value in mats.items():
                     mats[key] = value.cuda()
             if self.return_radar_pv:
-                pts_pv = pts_pv.cuda()
+                pts_pv = pts_pv.cuda() ## Shape: [B, N, 5] - batch, points, features
+        
             gt_boxes_3d = [gt_box.cuda() for gt_box in gt_boxes_3d]
             gt_labels_3d = [gt_label.cuda() for gt_label in gt_labels_3d]
         preds, depth_preds = self(sweep_imgs, mats,

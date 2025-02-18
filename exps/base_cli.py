@@ -76,6 +76,7 @@ def run_cli(model_class=BEVDepthLightningModel,
         train_dataloader = model.train_dataloader()
         ema_callback = EMACallback(
             len(train_dataloader.dataset) * args.max_epochs)
+        #training loop
         trainer = pl.Trainer.from_argparse_args(args, callbacks=[ema_callback, ModelSummary(max_depth=3)])
     else:
         trainer = pl.Trainer.from_argparse_args(args, callbacks=[ModelSummary(max_depth=3)])
@@ -83,6 +84,12 @@ def run_cli(model_class=BEVDepthLightningModel,
     if args.evaluate:
         trainer.test(model, ckpt_path=args.ckpt_path)
 
+
+    ## predict
+    # trainer.predict()
+# Calls the model's predict_step(batch, batch_idx).
+# Automatically loads data from the prediction dataloader (predict_dataloader()).
+# Runs forward inference on the dataset.
     elif args.predict:
         predict_step_outputs = trainer.predict(model, ckpt_path=args.ckpt_path)
         all_pred_results = list()
@@ -92,7 +99,7 @@ def run_cli(model_class=BEVDepthLightningModel,
                 all_pred_results.append(predict_step_output[i][:3])
                 all_img_metas.append(predict_step_output[i][3])
         synchronize()
-        len_dataset = len(model.test_dataloader().dataset)
+        len_dataset = len(model.predict_dataloader().dataset)  # changed val to predict dataset
         all_pred_results = sum(
             map(list, zip(*all_gather_object(all_pred_results))),
             [])[:len_dataset]

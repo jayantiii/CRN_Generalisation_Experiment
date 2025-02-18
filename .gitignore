@@ -202,6 +202,7 @@ tags
 checkpoints
 train_log
 docs/api
+data/
 .code-workspace.code-workspace
 output
 outputs
